@@ -1,0 +1,3 @@
+.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../app/page.js' or its corresponding type declarations.
+.next/types/validator.ts(57,39): error TS2307: Cannot find module '../../app/layout.js' or its corresponding type declarations.
+prisma.config.ts(2,30): error TS2307: Cannot find module 'prisma/config' or its corresponding type declarations.
