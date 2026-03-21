@@ -4,48 +4,36 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
+        const { messages, chatId } = await req.json();
 
-        // 🔥 GET TOKEN FROM COOKIE
-        const token = req.headers.get("cookie")?.split("token=")[1];
+        const cookieHeader = req.headers.get("cookie") || "";
+        const token = cookieHeader.split(";").find(c => c.trim().startsWith("token="))?.split("=")[1]?.trim();
 
         if (!token) {
-            return NextResponse.json(
-                { message: "Unauthorized" },
-                { status: 401 }
-            );
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET not defined");
-        }
-
-        // 🔥 DECODE TOKEN
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
-
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
         const userId = decoded.userId;
 
-        // 🔥 SAVE CHAT WITH REAL USER
-        const chat = await prisma.chat.upsert({
-            where: {
-                userId, // unique user
-            },
-            update: {
-                messages, // update existing chat
-            },
-            create: {
-                userId,
-                messages,
-            },
+        // UPDATE existing chat
+        if (chatId) {
+            const updated = await prisma.chat.update({
+                where: { id: chatId },
+                data: { messages },
+            });
+            return NextResponse.json(updated);
+        }
+
+        // CREATE new chat
+        const chat = await prisma.chat.create({
+            data: { userId, messages },
         });
 
         return NextResponse.json(chat);
 
     } catch (error) {
         console.error("SAVE CHAT ERROR:", error);
-        return NextResponse.json(
-            { message: "Failed to save chat" },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: "Failed" }, { status: 500 });
     }
 }

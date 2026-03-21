@@ -1,4 +1,5 @@
-// DashboardLayout.tsx
+"use client";
+
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
@@ -8,12 +9,19 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
+    <div style={{ display: "flex", height: "100vh" }}>
+
+      {/* SIDEBAR */}
       <Sidebar />
-      <div className="flex-1">
+
+      {/* MAIN */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Navbar />
-        <main className="p-6">{children}</main>
+        <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+          {children}
+        </div>
       </div>
+
     </div>
   );
 }

@@ -6,27 +6,51 @@ const client = new OpenAI({
     apiKey: process.env.OPENROUTER_API_KEY,
 });
 
+// 🧠 SYSTEM PROMPTS PER MODE
+const systemPrompts: Record<string, string> = {
+    general: `You are a helpful AI assistant inside a SaaS dashboard. 
+Be concise, clear, and friendly. Never say you are ChatGPT or mention OpenAI.`,
+
+    linkedin: `You are a professional LinkedIn content writer. 
+When given a topic, generate an engaging, professional LinkedIn post.
+Format: Start with a strong hook, add value in the body, end with a call to action.
+Use line breaks for readability. Add 3-5 relevant hashtags at the end.
+Never say you are ChatGPT or mention OpenAI.`,
+
+    ideas: `You are a creative idea generator and brainstorming expert.
+When given a topic, generate 5 unique, creative, and actionable ideas.
+Format each idea with a title and 1-2 sentence explanation.
+Be creative, practical, and inspiring.
+Never say you are ChatGPT or mention OpenAI.`,
+
+    code: `You are an expert software engineer and code explainer.
+When given code, explain it in simple, clear terms step by step.
+Break down what each part does, why it exists, and how it works.
+Use simple language — explain as if talking to a junior developer.
+Never say you are ChatGPT or mention OpenAI.`,
+};
+
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
+        const { messages, mode } = await req.json();
 
         if (!messages) {
             return NextResponse.json(
-                { message: "Prompt required" },
+                { message: "Messages required" },
                 { status: 400 }
             );
         }
 
+        // Pick system prompt based on mode (default: general)
+        const systemPrompt = systemPrompts[mode] || systemPrompts.general;
+
         const completion = await client.chat.completions.create({
-            model: "openrouter/free", // FREE model
+            model: "openrouter/free",
             messages: [
-                {
-                    role: "system",
-                    content: "You are an AI assistant inside a SaaS dashboard. You help users generate content like LinkedIn posts, ideas, and answers. Never say you are ChatGPT or mention OpenAI. Be concise and helpful."
-                },
-                ...messages
+                { role: "system", content: systemPrompt },
+                ...messages,
             ],
-            temperature: 0.3,
+            temperature: 0.7,
         });
 
         const result = completion.choices[0].message.content;
