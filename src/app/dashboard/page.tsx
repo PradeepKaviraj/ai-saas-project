@@ -2,38 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "@/context/ChatContext";
-
-// 🧠 MODE CONFIG
-const modes = [
-    {
-        id: "general",
-        icon: "💬",
-        label: "General Chat",
-        placeholder: "Ask me anything...",
-        color: "#2563eb",
-    },
-    {
-        id: "linkedin",
-        icon: "💼",
-        label: "LinkedIn Post",
-        placeholder: "Enter a topic for your LinkedIn post...",
-        color: "#0a66c2",
-    },
-    {
-        id: "ideas",
-        icon: "💡",
-        label: "Idea Generator",
-        placeholder: "Enter a topic to brainstorm ideas...",
-        color: "#d97706",
-    },
-    {
-        id: "code",
-        icon: "🖥️",
-        label: "Code Explainer",
-        placeholder: "Paste your code here...",
-        color: "#059669",
-    },
-];
+import { modes } from "@/features/ai/modes";
+import { generateAIResponse } from "@/services/aiService";
+import { saveChat } from "@/services/chatService";
 
 export default function Dashboard() {
     const {
@@ -47,7 +18,6 @@ export default function Dashboard() {
     const [selectedMode, setSelectedMode] = useState(modes[0]);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    // Auto scroll to bottom
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -63,34 +33,16 @@ export default function Dashboard() {
         setMessages(newMessages);
         setPrompt("");
 
-        const res = await fetch("/api/ai/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                messages: newMessages,
-                mode: selectedMode.id, // 🔥 send mode to backend
-            }),
-        });
-
-        const data = await res.json();
+        const result = await generateAIResponse(newMessages, selectedMode.id);
 
         const updatedMessages = [
             ...newMessages,
-            { role: "assistant" as const, content: data.result }
+            { role: "assistant" as const, content: result }
         ];
 
         setMessages(updatedMessages);
 
-        const saveRes = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                messages: updatedMessages,
-                chatId: selectedChatId,
-            }),
-        });
-
-        const savedChat = await saveRes.json();
+        const savedChat = await saveChat(updatedMessages, selectedChatId);
 
         if (!selectedChatId) {
             setSelectedChatId(savedChat.id);
@@ -174,10 +126,7 @@ export default function Dashboard() {
                             {selectedMode.label}
                         </p>
                         <p style={{ fontSize: "14px", color: "#444", maxWidth: "360px" }}>
-                            {selectedMode.id === "general" && "Ask me anything. I'm here to help."}
-                            {selectedMode.id === "linkedin" && "Give me a topic and I'll write a professional LinkedIn post for you."}
-                            {selectedMode.id === "ideas" && "Give me a topic and I'll brainstorm 5 creative ideas for you."}
-                            {selectedMode.id === "code" && "Paste any code and I'll explain it in simple terms."}
+                            {selectedMode.emptyStateText}
                         </p>
 
                         {/* QUICK PROMPTS */}
@@ -304,7 +253,7 @@ export default function Dashboard() {
                             fontSize: "14px",
                             lineHeight: "1.7",
                             border: msg.role === "assistant" ? "1px solid #2a2a2a" : "none",
-                            whiteSpace: "pre-wrap", // 🔥 important for formatted AI responses
+                            whiteSpace: "pre-wrap",
                         }}>
                             {msg.content}
                         </div>

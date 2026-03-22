@@ -1,27 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-
-interface Message {
-    role: "user" | "assistant";
-    content: string;
-}
-
-interface Chat {
-    id: string;
-    messages: Message[];
-    createdAt: string;
-}
-
-interface ChatContextType {
-    messages: Message[];
-    setMessages: (m: Message[]) => void;
-    chats: Chat[];
-    setChats: (c: Chat[]) => void;
-    selectedChatId: string | null;
-    setSelectedChatId: (id: string | null) => void;
-    startNewChat: () => void;
-}
+import { Message, Chat, ChatContextType } from "@/types";
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
@@ -32,7 +12,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const [chats, setChats] = useState<Chat[]>([]);
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
-    // Load all chats on mount
     useEffect(() => {
         const fetchChats = async () => {
             const res = await fetch("/api/chat/all");

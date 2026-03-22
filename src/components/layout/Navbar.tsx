@@ -1,13 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
-  const router = useRouter();
+  const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+  // Get initials from email
+  const getInitials = (email: string) => {
+    return email.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -20,27 +20,60 @@ export default function Navbar() {
       justifyContent: "space-between",
       alignItems: "center",
     }}>
-      <div>
-        <span style={{ color: "#aaa", fontSize: "14px" }}>
+
+      {/* LEFT — Welcome */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <span style={{ color: "white", fontSize: "14px", fontWeight: "500" }}>
           Welcome back 👋
+        </span>
+        <span style={{ color: "#555", fontSize: "12px" }}>
+          {user?.email || "Loading..."}
         </span>
       </div>
 
-      <button
-        onClick={handleLogout}
-        style={{
-          padding: "6px 16px",
-          borderRadius: "6px",
-          background: "transparent",
-          color: "#f87171",
-          border: "1px solid #7f1d1d",
-          cursor: "pointer",
-          fontSize: "13px",
-          fontWeight: "500",
-        }}
-      >
-        Logout
-      </button>
+      {/* RIGHT — Avatar + Logout */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+      }}>
+
+        {/* AVATAR */}
+        {user && (
+          <div style={{
+            width: "34px",
+            height: "34px",
+            borderRadius: "50%",
+            background: "#2563eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "13px",
+            fontWeight: "700",
+            color: "white",
+            border: "2px solid #1d4ed8",
+          }}>
+            {getInitials(user.email)}
+          </div>
+        )}
+
+        {/* LOGOUT */}
+        <button
+          onClick={logout}
+          style={{
+            padding: "6px 16px",
+            borderRadius: "6px",
+            background: "transparent",
+            color: "#f87171",
+            border: "1px solid #7f1d1d",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "500",
+          }}
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }
