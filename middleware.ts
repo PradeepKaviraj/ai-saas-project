@@ -5,23 +5,20 @@ import jwt from "jsonwebtoken";
 export function middleware(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
 
-    // ❌ No token → redirect
     if (!token) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
     try {
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET not defined");
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.redirect(new URL("/login", request.url));
         }
 
-        jwt.verify(token, process.env.JWT_SECRET);
-
-        // ✅ Token valid → allow
+        jwt.verify(token, secret);
         return NextResponse.next();
-
     } catch (error) {
-        // ❌ Invalid token → redirect
         return NextResponse.redirect(new URL("/login", request.url));
     }
 }
